@@ -13,12 +13,22 @@ let gameLoopId;
 let lastTime = 0;
 let score = 0;
 let lives = 5;
+let gameOverTimeout = null;
+
+let layout = { waterTop: 0, waterHeight: 0, waterBottom: 0, launcherY: 0 };
 
 // Prevent layout jumping
 function resizeCanvas() {
     const container = document.getElementById('game-container');
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
+    
+    layout.waterTop = Math.max(60, canvas.height * 0.1);
+    const minGroundHeight = 80;
+    const availableForWater = canvas.height - layout.waterTop - minGroundHeight;
+    layout.waterHeight = Math.min(450, Math.max(200, availableForWater));
+    layout.waterBottom = layout.waterTop + layout.waterHeight;
+    layout.launcherY = layout.waterBottom + 40;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -32,7 +42,7 @@ let spawnTimers = { ship: 0, missile: 0 };
 
 class Ship {
     constructor() {
-        this.y = canvas.height * 0.15 + 20 + Math.random() * (canvas.height * 0.7 - 60);
+        this.y = layout.waterTop + 20 + Math.random() * (layout.waterHeight - 60);
         this.direction = Math.random() > 0.5 ? 1 : -1;
         this.size = Math.random() > 0.7 ? 2 : Math.random() > 0.4 ? 1 : 0; 
         
@@ -53,9 +63,27 @@ class Ship {
         
         this.x = this.direction === 1 ? -this.w : canvas.width + this.w;
         this.markedForDeletion = false;
+        this.sinking = false;
+        this.sinkRotation = 0;
+        this.vy = 0;
     }
     
     update(dt) {
+        if (this.sinking) {
+            this.sinkRotation += (dt / 100) * this.direction;
+            this.vy += (dt / 1000) * 400; // Gravity
+            this.x += this.speed * (dt / 1000);
+            this.y += this.vy * (dt / 1000);
+            
+            // emit some smoke/fire
+            if (Math.random() > 0.5) particles.push(new Particle(this.x + this.w/2, this.y + this.h/2, (Math.random()-0.5)*50, -Math.random()*50, '#888', 4, 0.8));
+            
+            if (this.y > canvas.height + 100) {
+                this.markedForDeletion = true;
+            }
+            return;
+        }
+
         this.x += this.speed * (dt / 1000);
         if (this.direction === 1 && this.x > canvas.width) {
             score += this.pts * 2;
@@ -69,6 +97,13 @@ class Ship {
     }
     
     draw(ctx) {
+        ctx.save();
+        if (this.sinking) {
+            ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+            ctx.rotate(this.sinkRotation);
+            ctx.translate(-(this.x + this.w / 2), -(this.y + this.h / 2));
+        }
+
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.w, this.h);
         
@@ -80,12 +115,33 @@ class Ship {
         ctx.fillRect(this.x + this.w * 0.4, this.y - this.h * 0.6, this.w * 0.2, this.h * 0.6);
 
         // HP bar if damaged
-        if(this.hp < this.maxHp) {
+        if(!this.sinking && this.hp < this.maxHp) {
             ctx.fillStyle = '#f00';
             ctx.fillRect(this.x, this.y - 5, this.w, 3);
             ctx.fillStyle = '#0f0';
             ctx.fillRect(this.x, this.y - 5, this.w * (this.hp / this.maxHp), 3);
         }
+        
+        ctx.restore();
+        
+        // Draw Betrayal text NOT rotated
+        if (this.sinking) {
+            ctx.fillStyle = '#ff0000';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("WHY?!", this.x + this.w / 2, this.y - 20);
+        }
+    }
+
+    friendlyFireSink() {
+        if (this.sinking) return;
+        this.sinking = true;
+        this.speed = this.speed * 0.5; 
+        this.vy = -150; // Bounce up
+        
+        lives -= 1;
+        updateUI();
+        if (lives <= 0) gameOverTimeout = setTimeout(() => { if (gameState === 'playing') gameOver() }, 1500);
     }
 }
 
@@ -94,7 +150,7 @@ class Missile {
         this.x = Math.random() * canvas.width;
         this.y = -20;
         this.targetX = Math.random() * canvas.width;
-        this.targetY = canvas.height * 0.85; 
+        this.targetY = layout.waterBottom; 
         
         this.speed = 50 + Math.min(score / 15, 120);
         
@@ -110,7 +166,7 @@ class Missile {
         
         particles.push(new Particle(this.x, this.y, 0, -20, '#ff4400', 2, 0.4));
         
-        if (this.y > canvas.height) {
+        if (this.y > layout.waterBottom + 20) {
             this.markedForDeletion = true;
         }
     }
@@ -241,6 +297,7 @@ function updateUI() {
 function initGame() {
     score = 0;
     lives = 5;
+    if (gameOverTimeout) clearTimeout(gameOverTimeout);
     updateUI();
     ships = [];
     missiles = [];
@@ -252,6 +309,30 @@ function initGame() {
 }
 
 function checkCollisions() {
+    chickpeas.forEach(c => {
+        ships.forEach(s => {
+            if (c.markedForDeletion || s.markedForDeletion || s.sinking) return;
+            if (c.x > s.x && c.x < s.x + s.w && c.y > s.y && c.y < s.y + s.h) {
+                c.explode();
+                s.friendlyFireSink();
+            }
+        });
+    });
+
+    explosions.forEach(e => {
+        ships.forEach(s => {
+            if (e.markedForDeletion || s.markedForDeletion || s.sinking) return;
+            const closestX = Math.max(s.x, Math.min(e.x, s.x + s.w));
+            const closestY = Math.max(s.y, Math.min(e.y, s.y + s.h));
+            const distanceX = e.x - closestX;
+            const distanceY = e.y - closestY;
+            const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+            if (distanceSquared < (e.radius * e.radius)) {
+                s.friendlyFireSink();
+            }
+        });
+    });
+
     missiles.forEach(m => {
         explosions.forEach(e => {
             if (m.markedForDeletion || e.markedForDeletion) return;
@@ -267,7 +348,7 @@ function checkCollisions() {
     
     missiles.forEach(m => {
         ships.forEach(s => {
-            if (m.markedForDeletion || s.markedForDeletion) return;
+            if (m.markedForDeletion || s.markedForDeletion || s.sinking) return;
             if (m.x > s.x && m.x < s.x + s.w && m.y > s.y && m.y < s.y + s.h) {
                 m.markedForDeletion = true;
                 s.hp -= 1;
@@ -280,7 +361,7 @@ function checkCollisions() {
                     updateUI();
                     for(let i=0; i<30; i++) particles.push(new Particle(s.x + s.w/2, s.y + s.h/2, (Math.random()-0.5)*200, -Math.random()*150, '#ffa500', Math.random()*5+2, 1.2));
                     
-                    if (lives <= 0) gameOver();
+                    if (lives <= 0) gameOverTimeout = setTimeout(() => { if (gameState === 'playing') gameOver() }, 1500);
                 }
             }
         });
@@ -319,29 +400,29 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     ctx.fillStyle = '#8B4513'; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height * 0.15);
+    ctx.fillRect(0, 0, canvas.width, layout.waterTop);
     ctx.fillStyle = '#5c2e0b';
-    ctx.fillRect(0, canvas.height * 0.12, canvas.width, canvas.height * 0.03);
+    ctx.fillRect(0, layout.waterTop - Math.min(10, layout.waterTop), canvas.width, Math.min(10, layout.waterTop));
     
     ctx.fillStyle = '#005588';
-    ctx.fillRect(0, canvas.height * 0.15, canvas.width, canvas.height * 0.7);
+    ctx.fillRect(0, layout.waterTop, canvas.width, layout.waterHeight);
     ctx.fillStyle = '#0066aa';
     for(let i=0; i<6; i++) {
-        ctx.fillRect(0, canvas.height * 0.2 + i * (canvas.height*0.11), canvas.width, 2);
+        ctx.fillRect(0, layout.waterTop + (i/6)*layout.waterHeight + 10, canvas.width, 2);
     }
 
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(0, canvas.height * 0.85, canvas.width, canvas.height * 0.15);
+    ctx.fillRect(0, layout.waterBottom, canvas.width, canvas.height - layout.waterBottom);
     ctx.fillStyle = '#5c2e0b';
-    ctx.fillRect(0, canvas.height * 0.85, canvas.width, canvas.height * 0.03);
+    ctx.fillRect(0, layout.waterBottom, canvas.width, 10);
     
     ctx.fillStyle = '#444';
     ctx.beginPath();
-    ctx.arc(canvas.width / 2, canvas.height * 0.9, 25, Math.PI, 0); 
+    ctx.arc(canvas.width / 2, layout.launcherY, 25, Math.PI, 0); 
     ctx.fill();
     ctx.fillStyle = '#777';
     ctx.beginPath();
-    ctx.arc(canvas.width / 2, canvas.height * 0.9, 15, Math.PI, 0); 
+    ctx.arc(canvas.width / 2, layout.launcherY, 15, Math.PI, 0); 
     ctx.fill();
 
     if (gameState === 'playing') {
@@ -393,9 +474,9 @@ function handleInput(clientX, clientY) {
     const y = (clientY - rect.top) * scaleY;
     
     const startX = canvas.width / 2;
-    const startY = canvas.height * 0.9;
+    const startY = layout.launcherY;
     
-    if (y > canvas.height * 0.8) return;
+    if (y > layout.waterBottom) return;
     
     chickpeas.push(new Chickpea(startX, startY, x, y));
 }
