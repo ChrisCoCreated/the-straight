@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Straight of Hummus</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div id="top-bar">
+                <div id="score-display">Score: <span id="score">0</span></div>
+                <div id="highscore-display">High Score: <span id="high-score">0</span></div>
+                <div id="lives-display">Lives: <span id="lives">5</span></div>
+            </div>
+            <div id="game-over" class="hidden">
+                <h1>GAME OVER</h1>
+                <p>Score: <span id="final-score">0</span></p>
+                <p>High Score: <span id="game-over-high-score">0</span></p>
+                <button id="restart-btn">Restart Game</button>
+            </div>
+            <div id="start-screen">
+                <h1>The Straight<br>of Hummus</h1>
+                <p>Defend the ships! Tap to fire Hummus!</p>
+                <button id="start-btn">Start Game</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
