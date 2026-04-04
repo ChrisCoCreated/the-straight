@@ -4,6 +4,7 @@ const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over');
 const startBtn = document.getElementById('start-btn');
 const restartBtn = document.getElementById('restart-btn');
+const muteBtn = document.getElementById('mute-btn');
 const scoreEl = document.getElementById('score');
 const livesEl = document.getElementById('lives');
 const finalScoreEl = document.getElementById('final-score');
@@ -18,6 +19,7 @@ let lives = 5;
 let gameOverTimeout = null;
 let shotTimer = 0;
 let audioCtx = null;
+let muted = false;
 let currentNoteIndex = 0;
 let noteTimer = 0;
 
@@ -29,7 +31,7 @@ const musicSequence = [
 ];
 
 function playNote(freq, dur) {
-    if (!audioCtx) return;
+    if (!audioCtx || muted) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'square'; // Classic retro beeper sound
@@ -563,6 +565,11 @@ function gameOver() {
     if (gameOverHighScoreEl) gameOverHighScoreEl.innerText = highScore;
     gameOverScreen.classList.remove('hidden');
 }
+
+muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    muteBtn.innerText = muted ? "🔈" : "🔊";
+});
 
 startBtn.addEventListener('click', startGame);
 restartBtn.addEventListener('click', startGame);
