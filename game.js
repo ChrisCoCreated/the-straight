@@ -13,9 +13,9 @@ const gameOverHighScoreEl = document.getElementById('game-over-high-score');
 let gameState = 'start';
 let gameLoopId;
 let lastTime = 0;
-let score = 0;
 let lives = 5;
 let gameOverTimeout = null;
+let shotTimer = 0;
 let highScore = parseInt(localStorage.getItem('hummus_highscore')) || 0;
 let newHighScoreTriggered = false;
 let highScoreTextTimer = 0;
@@ -170,7 +170,8 @@ class Missile {
         this.targetX = Math.random() * canvas.width;
         this.targetY = layout.waterBottom; 
         
-        this.speed = 50 + Math.min(score / 15, 120);
+        // Starts at 60, gains 5 speed for every ship saved/point threshold
+        this.speed = 60 + (score * 0.5); 
         
         const angle = Math.atan2(this.targetY - this.y, this.targetX - this.x);
         this.vx = Math.cos(angle) * this.speed;
@@ -407,6 +408,7 @@ function update(dt) {
     
     spawnTimers.ship -= dt;
     spawnTimers.missile -= dt;
+    if (shotTimer > 0) shotTimer -= dt;
     
     if (spawnTimers.ship <= 0) {
         ships.push(new Ship());
@@ -415,7 +417,7 @@ function update(dt) {
     
     if (spawnTimers.missile <= 0) {
         missiles.push(new Missile());
-        spawnTimers.missile = Math.max(400, 1500 - score * 1.5); 
+        spawnTimers.missile = 1000; // One missile per second
     }
     
     if (highScoreTextTimer > 0) {
@@ -543,8 +545,9 @@ function handleInput(clientX, clientY) {
     const startX = canvas.width / 2;
     const startY = layout.launcherY;
     
-    if (y > layout.waterBottom) return;
+    if (y > layout.waterBottom || shotTimer > 0) return;
     
+    shotTimer = 1000; // Limit to one shot per second
     chickpeas.push(new Chickpea(startX, startY, x, y));
 }
 
