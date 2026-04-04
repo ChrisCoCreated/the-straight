@@ -353,16 +353,6 @@ function initGame() {
 }
 
 function checkCollisions() {
-    chickpeas.forEach(c => {
-        ships.forEach(s => {
-            if (c.markedForDeletion || s.markedForDeletion || s.sinking) return;
-            if (c.x > s.x && c.x < s.x + s.w && c.y > s.y && c.y < s.y + s.h) {
-                c.explode();
-                s.friendlyFireSink();
-            }
-        });
-    });
-
     explosions.forEach(e => {
         ships.forEach(s => {
             if (e.markedForDeletion || s.markedForDeletion || s.sinking) return;
