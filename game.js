@@ -19,6 +19,15 @@ let gameOverTimeout = null;
 let highScore = parseInt(localStorage.getItem('hummus_highscore')) || 0;
 let newHighScoreTriggered = false;
 let highScoreTextTimer = 0;
+let currentHighScoreJoke = "";
+const highScoreJokes = [
+    "A TRUE HUMMUS HERO!",
+    "FALAFEL-TASTIC!",
+    "PURE GOLDEN TAHINI!",
+    "PITA PERFECTION!",
+    "SWEET CHICKPEA GLORY!",
+    "THE SULTAN OF DIP!"
+];
 
 if (highScoreEl) highScoreEl.innerText = highScore;
 if (gameOverHighScoreEl) gameOverHighScoreEl.innerText = highScore;
@@ -137,7 +146,7 @@ class Ship {
             ctx.fillStyle = '#ff0000';
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText("WHY?!", this.x + this.w / 2, this.y - 20);
+            ctx.fillText(this.betrayalMessage || "WHY?!", this.x + this.w / 2, this.y - 20);
         }
     }
 
@@ -146,6 +155,9 @@ class Ship {
         this.sinking = true;
         this.speed = this.speed * 0.5; 
         this.vy = -150; // Bounce up
+        
+        const betrayalTexts = ["MY PITA!", "HUMMUS DOWN!", "FRIED!", "WHY, CHEF?!", "SOGGY FALAFEL!", "TAHINI TEARS!"];
+        this.betrayalMessage = betrayalTexts[Math.floor(Math.random() * betrayalTexts.length)];
         
         lives -= 1;
         updateUI();
@@ -306,6 +318,7 @@ function updateUI() {
         if (highScore > 0 && !newHighScoreTriggered) {
             newHighScoreTriggered = true;
             highScoreTextTimer = 4.0;
+            currentHighScoreJoke = highScoreJokes[Math.floor(Math.random() * highScoreJokes.length)];
             // Confetti time!
             for (let i = 0; i < 150; i++) {
                 particles.push(new Particle(
@@ -487,9 +500,9 @@ function draw() {
         ctx.fillText("NEW HIGH SCORE!", 0, 0);
         
         ctx.font = "bold 20px 'Press Start 2P', sans-serif";
-        ctx.strokeText("MOM WOULD BE PROUD", 0, 50);
+        ctx.strokeText(currentHighScoreJoke, 0, 50);
         ctx.fillStyle = '#fff';
-        ctx.fillText("MOM WOULD BE PROUD", 0, 50);
+        ctx.fillText(currentHighScoreJoke, 0, 50);
         
         ctx.restore();
     }
