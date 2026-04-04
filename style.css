@@ -70,14 +70,19 @@ canvas {
 }
 
 #mute-btn {
-    background: none;
-    border: none;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid #ffaa00;
+    border-radius: 5px;
     box-shadow: none;
-    font-size: 20px;
-    padding: 0;
+    font-size: 24px;
+    padding: 5px;
     cursor: pointer;
     line-height: 1;
     pointer-events: auto;
+    z-index: 30;
     filter: drop-shadow(2px 2px 0px #000);
 }
 
@@ -87,7 +92,9 @@ canvas {
         font-size: 9px;
     }
     #mute-btn {
-        font-size: 16px;
+        font-size: 20px;
+        bottom: 10px;
+        right: 10px;
     }
 }
 
