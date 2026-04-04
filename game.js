@@ -581,9 +581,10 @@ function gameOver() {
     gameOverScreen.classList.remove('hidden');
 }
 
+muteBtn.innerText = "AUDIO: ON";
 muteBtn.addEventListener('click', () => {
     muted = !muted;
-    muteBtn.innerText = muted ? "🔈" : "🔊";
+    muteBtn.innerText = muted ? "AUDIO: OFF" : "AUDIO: ON";
 });
 
 startBtn.addEventListener('click', startGame);
