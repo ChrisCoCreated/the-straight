@@ -7,6 +7,8 @@ const restartBtn = document.getElementById('restart-btn');
 const scoreEl = document.getElementById('score');
 const livesEl = document.getElementById('lives');
 const finalScoreEl = document.getElementById('final-score');
+const highScoreEl = document.getElementById('high-score');
+const gameOverHighScoreEl = document.getElementById('game-over-high-score');
 
 let gameState = 'start';
 let gameLoopId;
@@ -14,6 +16,12 @@ let lastTime = 0;
 let score = 0;
 let lives = 5;
 let gameOverTimeout = null;
+let highScore = parseInt(localStorage.getItem('hummus_highscore')) || 0;
+let newHighScoreTriggered = false;
+let highScoreTextTimer = 0;
+
+if (highScoreEl) highScoreEl.innerText = highScore;
+if (gameOverHighScoreEl) gameOverHighScoreEl.innerText = highScore;
 
 let layout = { waterTop: 0, waterHeight: 0, waterBottom: 0, launcherY: 0 };
 
@@ -117,9 +125,9 @@ class Ship {
         // HP bar if damaged
         if(!this.sinking && this.hp < this.maxHp) {
             ctx.fillStyle = '#f00';
-            ctx.fillRect(this.x, this.y - 5, this.w, 3);
+            ctx.fillRect(this.x, this.y + this.h - Math.max(3, this.h * 0.25), this.w, Math.max(3, this.h * 0.25));
             ctx.fillStyle = '#0f0';
-            ctx.fillRect(this.x, this.y - 5, this.w * (this.hp / this.maxHp), 3);
+            ctx.fillRect(this.x, this.y + this.h - Math.max(3, this.h * 0.25), this.w * (this.hp / this.maxHp), Math.max(3, this.h * 0.25));
         }
         
         ctx.restore();
@@ -275,6 +283,7 @@ class Particle {
     }
     
     update(dt) {
+        this.vy += 300 * (dt / 1000); // Gravity for everything!
         this.x += this.vx * (dt / 1000);
         this.y += this.vy * (dt / 1000);
         this.life -= dt / 1000;
@@ -292,11 +301,35 @@ class Particle {
 function updateUI() {
     scoreEl.innerText = score;
     livesEl.innerText = lives;
+    
+    if (score > highScore) {
+        if (highScore > 0 && !newHighScoreTriggered) {
+            newHighScoreTriggered = true;
+            highScoreTextTimer = 4.0;
+            // Confetti time!
+            for (let i = 0; i < 150; i++) {
+                particles.push(new Particle(
+                    canvas.width / 2,
+                    canvas.height,
+                    (Math.random() - 0.5) * 800,
+                    -400 - Math.random() * 600,
+                    `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    Math.random() * 6 + 4,
+                    3.0
+                ));
+            }
+        }
+        highScore = score;
+        localStorage.setItem('hummus_highscore', highScore);
+        if (highScoreEl) highScoreEl.innerText = highScore;
+    }
 }
 
 function initGame() {
     score = 0;
     lives = 5;
+    newHighScoreTriggered = false;
+    highScoreTextTimer = 0;
     if (gameOverTimeout) clearTimeout(gameOverTimeout);
     updateUI();
     ships = [];
@@ -384,6 +417,10 @@ function update(dt) {
         spawnTimers.missile = Math.max(400, 1500 - score * 1.5); 
     }
     
+    if (highScoreTextTimer > 0) {
+        highScoreTextTimer -= dt / 1000;
+    }
+    
     [...ships, ...missiles, ...chickpeas, ...explosions, ...particles].forEach(e => e.update(dt));
     
     checkCollisions();
@@ -428,6 +465,34 @@ function draw() {
     if (gameState === 'playing') {
         [...ships, ...explosions, ...particles, ...missiles, ...chickpeas].forEach(e => e.draw(ctx));
     }
+    
+    // Draw funny high score popup
+    if (highScoreTextTimer > 0) {
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 3);
+        
+        const bounce = Math.abs(Math.sin(highScoreTextTimer * 10)) * 20;
+        const rot = Math.sin(highScoreTextTimer * 5) * 0.2;
+        ctx.translate(0, -bounce);
+        ctx.rotate(rot);
+        
+        const size = 30 + Math.abs(Math.sin(highScoreTextTimer * 8)) * 10;
+        ctx.font = `bold ${size}px 'Press Start 2P', sans-serif`;
+        ctx.textAlign = 'center';
+        
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 6;
+        ctx.strokeText("NEW HIGH SCORE!", 0, 0);
+        ctx.fillStyle = `hsl(${highScoreTextTimer * 360}, 100%, 50%)`;
+        ctx.fillText("NEW HIGH SCORE!", 0, 0);
+        
+        ctx.font = "bold 20px 'Press Start 2P', sans-serif";
+        ctx.strokeText("MOM WOULD BE PROUD", 0, 50);
+        ctx.fillStyle = '#fff';
+        ctx.fillText("MOM WOULD BE PROUD", 0, 50);
+        
+        ctx.restore();
+    }
 }
 
 function gameLoop(timestamp) {
@@ -452,6 +517,7 @@ function startGame() {
 function gameOver() {
     gameState = 'gameover';
     finalScoreEl.innerText = score;
+    if (gameOverHighScoreEl) gameOverHighScoreEl.innerText = highScore;
     gameOverScreen.classList.remove('hidden');
 }
 
