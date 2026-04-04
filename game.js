@@ -13,9 +13,35 @@ const gameOverHighScoreEl = document.getElementById('game-over-high-score');
 let gameState = 'start';
 let gameLoopId;
 let lastTime = 0;
+let score = 0;
 let lives = 5;
 let gameOverTimeout = null;
 let shotTimer = 0;
+let audioCtx = null;
+let currentNoteIndex = 0;
+let noteTimer = 0;
+
+const musicSequence = [
+    { f: 261, d: 200 }, { f: 329, d: 200 }, { f: 392, d: 200 }, { f: 523, d: 400 },
+    { f: 392, d: 200 }, { f: 329, d: 200 }, { f: 261, d: 400 },
+    { f: 293, d: 200 }, { f: 349, d: 200 }, { f: 440, d: 200 }, { f: 587, d: 400 },
+    { f: 440, d: 200 }, { f: 349, d: 200 }, { f: 293, d: 400 }
+];
+
+function playNote(freq, dur) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square'; // Classic retro beeper sound
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur/1000);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur/1000);
+}
+
 let highScore = parseInt(localStorage.getItem('hummus_highscore')) || 0;
 let newHighScoreTriggered = false;
 let highScoreTextTimer = 0;
@@ -424,6 +450,15 @@ function update(dt) {
         highScoreTextTimer -= dt / 1000;
     }
     
+    // Play comedy Beeper music
+    noteTimer -= dt;
+    if (noteTimer <= 0) {
+        const note = musicSequence[currentNoteIndex];
+        playNote(note.f, note.d);
+        noteTimer = note.d + 50; 
+        currentNoteIndex = (currentNoteIndex + 1) % musicSequence.length;
+    }
+    
     [...ships, ...missiles, ...chickpeas, ...explosions, ...particles].forEach(e => e.update(dt));
     
     checkCollisions();
@@ -508,6 +543,11 @@ function gameLoop(timestamp) {
 }
 
 function startGame() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } else if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
     initGame();
     gameState = 'playing';
     startScreen.classList.add('hidden');
