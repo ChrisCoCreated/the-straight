@@ -40,7 +40,7 @@ function resizeCanvas() {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
     
-    layout.waterHeight = Math.min(600, Math.max(200, canvas.height * 0.65));
+    layout.waterHeight = Math.min(600, canvas.height - 100);
     layout.waterTop = (canvas.height - layout.waterHeight) / 2;
     layout.waterBottom = layout.waterTop + layout.waterHeight;
     layout.launcherY = layout.waterBottom + 40;
