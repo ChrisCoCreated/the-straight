@@ -70,7 +70,7 @@ canvas {
 }
 
 #mute-btn {
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     right: 20px;
     background: rgba(0, 0, 0, 0.4);

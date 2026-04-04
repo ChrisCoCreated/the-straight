@@ -24,19 +24,30 @@ let currentNoteIndex = 0;
 let noteTimer = 0;
 
 const musicSequence = [
-    { f: 261, d: 200 }, { f: 329, d: 200 }, { f: 392, d: 200 }, { f: 523, d: 400 },
-    { f: 392, d: 200 }, { f: 329, d: 200 }, { f: 261, d: 400 },
-    { f: 293, d: 200 }, { f: 349, d: 200 }, { f: 440, d: 200 }, { f: 587, d: 400 },
-    { f: 440, d: 200 }, { f: 349, d: 200 }, { f: 293, d: 400 }
+    // Verse 1: C Major feel
+    { lead: 261, bass: 130, d: 250 }, { lead: 329, bass: null, d: 250 }, 
+    { lead: 392, bass: 130, d: 250 }, { lead: 523, bass: null, d: 250 },
+    { lead: 392, bass: 196, d: 250 }, { lead: 329, bass: null, d: 250 }, 
+    { lead: 261, bass: 196, d: 250 }, { lead: 196, bass: null, d: 250 },
+    // Verse 2: F Major/G Major transition
+    { lead: 349, bass: 174, d: 250 }, { lead: 440, bass: null, d: 250 }, 
+    { lead: 523, bass: 174, d: 250 }, { lead: 587, bass: 196, d: 250 },
+    { lead: 493, bass: null, d: 250 }, { lead: 392, bass: 196, d: 250 }, 
+    { lead: 293, bass: null, d: 250 }, { lead: 196, bass: 196, d: 250 },
+    // Comedy "Arabic-ish" hijaz interval bit
+    { lead: 261, bass: 130, d: 250 }, { lead: 277, bass: null, d: 250 }, 
+    { lead: 330, bass: 130, d: 250 }, { lead: 349, bass: null, d: 250 },
+    { lead: 392, bass: 196, d: 250 }, { lead: 349, bass: null, d: 250 }, 
+    { lead: 330, bass: 130, d: 250 }, { lead: 277, bass: null, d: 250 }
 ];
 
-function playNote(freq, dur) {
-    if (!audioCtx || muted) return;
+function playNote(freq, dur, type = 'square', volume = 0.05) {
+    if (!audioCtx || muted || !freq) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = 'square'; // Classic retro beeper sound
+    osc.type = type; 
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur/1000);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -456,8 +467,12 @@ function update(dt) {
     noteTimer -= dt;
     if (noteTimer <= 0) {
         const note = musicSequence[currentNoteIndex];
-        playNote(note.f, note.d);
-        noteTimer = note.d + 50; 
+        // Lead melody
+        playNote(note.lead, note.d, 'square', 0.05);
+        // Bassline
+        if (note.bass) playNote(note.bass, note.d, 'triangle', 0.08);
+        
+        noteTimer = note.d; 
         currentNoteIndex = (currentNoteIndex + 1) % musicSequence.length;
     }
     
