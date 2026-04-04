@@ -594,7 +594,7 @@ function handleInput(clientX, clientY) {
     
     if (y > layout.waterBottom || shotTimer > 0) return;
     
-    shotTimer = 1000; // Limit to one shot per second
+    shotTimer = 500; // Limit to one shot per 0.5s (twice the frequency of 1s missiles)
     chickpeas.push(new Chickpea(startX, startY, x, y));
 }
 
