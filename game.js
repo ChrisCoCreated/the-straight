@@ -567,25 +567,26 @@ function draw() {
     if (gameState === 'playing') {
         [...ships, ...explosions, ...particles, ...missiles, ...chickpeas].forEach(e => e.draw(ctx));
         
-        // Draw Missile Warning (Silo Graphic)
+        // Draw Missile Warning (Pulsing Dot)
         if (pendingMissile) {
-            const flash = Math.floor(Date.now() / 150) % 2 === 0;
             const x = pendingMissile.x;
             const y = layout.waterTop;
             
-            ctx.fillStyle = '#444';
-            ctx.fillRect(x - 15, y - 10, 30, 10); // Base
+            // Pulsing dot
+            const pulse = (Math.sin(Date.now() / 100) + 1) / 2; // 0 to 1
+            const size = 4 + pulse * 4;
             
-            // Flashing hatch/silo lid
-            ctx.fillStyle = flash ? '#ff0000' : '#800';
-            ctx.fillRect(x - 10, y - 5, 20, 5);
+            ctx.fillStyle = `rgba(255, 0, 0, ${0.4 + pulse * 0.6})`;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
             
-            // Subtle "warning" glow on the water
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 40);
-            gradient.addColorStop(0, flash ? 'rgba(255, 0, 0, 0.4)' : 'rgba(255, 0, 0, 0.1)');
-            gradient.addColorStop(1, 'transparent');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(x - 40, y, 80, 40);
+            // Outer ring
+            ctx.strokeStyle = `rgba(255, 0, 0, ${0.2 + pulse * 0.4})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, size * 2, 0, Math.PI * 2);
+            ctx.stroke();
         }
     }
     
