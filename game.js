@@ -121,6 +121,7 @@ let chickpeas = [];
 let explosions = [];
 let particles = [];
 let spawnTimers = { ship: 0, missile: 0 };
+let pendingMissile = null;
 
 class Ship {
     constructor() {
@@ -233,8 +234,8 @@ class Ship {
 }
 
 class Missile {
-    constructor() {
-        this.x = Math.random() * canvas.width;
+    constructor(sourceX) {
+        this.x = sourceX !== undefined ? sourceX : Math.random() * canvas.width;
         this.y = -20;
         this.targetX = Math.random() * canvas.width;
         this.targetY = layout.waterBottom; 
@@ -487,8 +488,20 @@ function update(dt) {
     }
     
     if (spawnTimers.missile <= 0) {
-        missiles.push(new Missile());
-        spawnTimers.missile = 1000; // One missile per second
+        if (!pendingMissile) {
+            // Start warning phase
+            pendingMissile = {
+                x: Math.random() * canvas.width,
+                timer: 800 // 0.8s warning
+            };
+        } else {
+            pendingMissile.timer -= dt;
+            if (pendingMissile.timer <= 0) {
+                missiles.push(new Missile(pendingMissile.x));
+                pendingMissile = null;
+                spawnTimers.missile = 1000; // One missile per second
+            }
+        }
     }
     
     if (highScoreTextTimer > 0) {
@@ -551,6 +564,26 @@ function draw() {
 
     if (gameState === 'playing') {
         [...ships, ...explosions, ...particles, ...missiles, ...chickpeas].forEach(e => e.draw(ctx));
+        
+        // Draw Missile Warning
+        if (pendingMissile) {
+            const flash = Math.floor(Date.now() / 100) % 2 === 0;
+            ctx.fillStyle = flash ? '#ffaa00' : 'rgba(255, 170, 0, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(pendingMissile.x - 15, 0);
+            ctx.lineTo(pendingMissile.x + 15, 0);
+            ctx.lineTo(pendingMissile.x, 30);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = 'rgba(255, 170, 0, 0.5)';
+            ctx.beginPath();
+            ctx.moveTo(pendingMissile.x, 30);
+            ctx.lineTo(pendingMissile.x, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
     }
     
     // Draw funny high score popup
