@@ -239,8 +239,8 @@ class Missile {
         this.targetX = Math.random() * canvas.width;
         this.targetY = layout.waterBottom; 
         
-        // Starts at 60, gains 5 speed for every ship saved/point threshold
-        this.speed = 60 + (score * 0.5); 
+        // Starts at 60, gains 0.25 speed for every point (much slower ramp)
+        this.speed = 60 + (score * 0.25); 
         
         const angle = Math.atan2(this.targetY - this.y, this.targetX - this.x);
         this.vx = Math.cos(angle) * this.speed;
