@@ -56,34 +56,6 @@ function playNote(freq, dur, type = 'square', volume = 0.05) {
     osc.stop(audioCtx.currentTime + dur/1000);
 }
 
-function playEffect(type) {
-    if (!audioCtx || muted) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    
-    if (type === 'sink') {
-        // High to low frequency slide for "betrayal/sinking"
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.5);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
-        osc.stop(audioCtx.currentTime + 0.5);
-    } else if (type === 'explode') {
-        // Noisy retro explosion
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(20, audioCtx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-        osc.stop(audioCtx.currentTime + 0.2);
-    }
-    
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-}
-
 let highScore = parseInt(localStorage.getItem('hummus_highscore')) || 0;
 let newHighScoreTriggered = false;
 let highScoreTextTimer = 0;
@@ -226,8 +198,6 @@ class Ship {
         
         const betrayalTexts = ["MY PITA!", "HUMMUS DOWN!", "FRIED!", "WHY, CHEF?!", "SOGGY FALAFEL!", "TAHINI TEARS!"];
         this.betrayalMessage = betrayalTexts[Math.floor(Math.random() * betrayalTexts.length)];
-        
-        playEffect('sink');
         
         lives -= 1;
         updateUI();
@@ -467,8 +437,6 @@ function checkCollisions() {
                     lives -= 1;
                     updateUI();
                     for(let i=0; i<30; i++) particles.push(new Particle(s.x + s.w/2, s.y + s.h/2, (Math.random()-0.5)*200, -Math.random()*150, '#ffa500', Math.random()*5+2, 1.2));
-                    
-                    playEffect('explode');
                     
                     if (lives <= 0) gameOverTimeout = setTimeout(() => { if (gameState === 'playing') gameOver() }, 1500);
                 }
