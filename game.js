@@ -48,7 +48,8 @@ function playNote(freq, dur, type = 'square', volume = 0.05) {
     osc.type = type; 
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur/1000);
+    // Use linear ramp to 0 for the volume envelope to be safe
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur/1000);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
@@ -64,8 +65,7 @@ function playEffect(type) {
         // High to low frequency slide for "betrayal/sinking"
         osc.type = 'square';
         osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-        // Use a small positive value for exponential ramp to avoid freezing
-        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+        osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.5);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
         osc.stop(audioCtx.currentTime + 0.5);
