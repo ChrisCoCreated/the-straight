@@ -125,7 +125,8 @@ let pendingMissile = null;
 
 class Ship {
     constructor() {
-        this.y = layout.waterTop + 20 + Math.random() * (layout.waterHeight - 60);
+        const topGap = layout.waterHeight / 6;
+        this.y = layout.waterTop + topGap + Math.random() * (layout.waterHeight - topGap - 40);
         this.direction = Math.random() > 0.5 ? 1 : -1;
         this.size = Math.random() > 0.7 ? 2 : Math.random() > 0.4 ? 1 : 0; 
         
@@ -565,24 +566,25 @@ function draw() {
     if (gameState === 'playing') {
         [...ships, ...explosions, ...particles, ...missiles, ...chickpeas].forEach(e => e.draw(ctx));
         
-        // Draw Missile Warning
+        // Draw Missile Warning (Silo Graphic)
         if (pendingMissile) {
-            const flash = Math.floor(Date.now() / 100) % 2 === 0;
-            ctx.fillStyle = flash ? '#ffaa00' : 'rgba(255, 170, 0, 0.3)';
-            ctx.beginPath();
-            ctx.moveTo(pendingMissile.x - 15, layout.waterTop);
-            ctx.lineTo(pendingMissile.x + 15, layout.waterTop);
-            ctx.lineTo(pendingMissile.x, layout.waterTop + 30);
-            ctx.closePath();
-            ctx.fill();
+            const flash = Math.floor(Date.now() / 150) % 2 === 0;
+            const x = pendingMissile.x;
+            const y = layout.waterTop;
             
-            ctx.setLineDash([5, 5]);
-            ctx.strokeStyle = 'rgba(255, 170, 0, 0.5)';
-            ctx.beginPath();
-            ctx.moveTo(pendingMissile.x, layout.waterTop + 30);
-            ctx.lineTo(pendingMissile.x, layout.waterBottom);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(x - 15, y - 10, 30, 10); // Base
+            
+            // Flashing hatch/silo lid
+            ctx.fillStyle = flash ? '#ff0000' : '#800';
+            ctx.fillRect(x - 10, y - 5, 20, 5);
+            
+            // Subtle "warning" glow on the water
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 40);
+            gradient.addColorStop(0, flash ? 'rgba(255, 0, 0, 0.4)' : 'rgba(255, 0, 0, 0.1)');
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x - 40, y, 80, 40);
         }
     }
     
