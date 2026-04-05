@@ -236,7 +236,7 @@ class Ship {
 class Missile {
     constructor(sourceX) {
         this.x = sourceX !== undefined ? sourceX : Math.random() * canvas.width;
-        this.y = -20;
+        this.y = layout.waterTop; 
         this.targetX = Math.random() * canvas.width;
         this.targetY = layout.waterBottom; 
         
@@ -570,17 +570,17 @@ function draw() {
             const flash = Math.floor(Date.now() / 100) % 2 === 0;
             ctx.fillStyle = flash ? '#ffaa00' : 'rgba(255, 170, 0, 0.3)';
             ctx.beginPath();
-            ctx.moveTo(pendingMissile.x - 15, 0);
-            ctx.lineTo(pendingMissile.x + 15, 0);
-            ctx.lineTo(pendingMissile.x, 30);
+            ctx.moveTo(pendingMissile.x - 15, layout.waterTop);
+            ctx.lineTo(pendingMissile.x + 15, layout.waterTop);
+            ctx.lineTo(pendingMissile.x, layout.waterTop + 30);
             ctx.closePath();
             ctx.fill();
             
             ctx.setLineDash([5, 5]);
             ctx.strokeStyle = 'rgba(255, 170, 0, 0.5)';
             ctx.beginPath();
-            ctx.moveTo(pendingMissile.x, 30);
-            ctx.lineTo(pendingMissile.x, canvas.height);
+            ctx.moveTo(pendingMissile.x, layout.waterTop + 30);
+            ctx.lineTo(pendingMissile.x, layout.waterBottom);
             ctx.stroke();
             ctx.setLineDash([]);
         }
