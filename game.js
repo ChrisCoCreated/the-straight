@@ -64,6 +64,7 @@ function playEffect(type) {
         // High to low frequency slide for "betrayal/sinking"
         osc.type = 'square';
         osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        // Use a small positive value for exponential ramp to avoid freezing
         osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
