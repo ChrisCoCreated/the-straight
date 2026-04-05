@@ -544,13 +544,13 @@ function draw() {
             const pulse = (Math.sin(Date.now() / 100) + 1) / 2; // 0 to 1
             const size = 4 + pulse * 4;
             
-            ctx.fillStyle = `rgba(255, 0, 0, ${0.4 + pulse * 0.6})`;
+            ctx.fillStyle = `rgba(255, 165, 0, ${0.4 + pulse * 0.6})`;
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
             ctx.fill();
             
             // Outer ring
-            ctx.strokeStyle = `rgba(255, 0, 0, ${0.2 + pulse * 0.4})`;
+            ctx.strokeStyle = `rgba(255, 165, 0, ${0.2 + pulse * 0.4})`;
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(x, y, size * 2, 0, Math.PI * 2);
