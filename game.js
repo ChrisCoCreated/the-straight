@@ -452,7 +452,7 @@ function checkCollisions() {
 function update(dt) {
     if (gameState !== 'playing') return;
     
-    let targetLevel = Math.floor(score / 150) + 1;
+    let targetLevel = Math.floor(score / 250) + 1;
     if (targetLevel > currentLevel) {
         currentLevel = targetLevel;
         levelNotificationTimer = 3.0; // Show notification for 3 seconds
