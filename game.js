@@ -16,6 +16,8 @@ let gameLoopId;
 let lastTime = 0;
 let score = 0;
 let lives = 5;
+let currentLevel = 1;
+let levelNotificationTimer = 0;
 let gameOverTimeout = null;
 let shotTimer = 0;
 let audioCtx = null;
@@ -212,8 +214,8 @@ class Missile {
         this.targetX = Math.random() * canvas.width;
         this.targetY = layout.waterBottom; 
         
-        // Starts at 60, gains 0.25 speed for every point (much slower ramp)
-        this.speed = 60 + (score * 0.25); 
+        // Starts at 42, step change based on level
+        this.speed = 42 + ((currentLevel - 1) * 10); 
         
         const angle = Math.atan2(this.targetY - this.y, this.targetX - this.x);
         this.vx = Math.cos(angle) * this.speed;
@@ -382,8 +384,10 @@ function updateUI() {
 function initGame() {
     score = 0;
     lives = 5;
+    currentLevel = 1;
     newHighScoreTriggered = false;
     highScoreTextTimer = 0;
+    levelNotificationTimer = 0;
     if (gameOverTimeout) clearTimeout(gameOverTimeout);
     updateUI();
     ships = [];
@@ -447,6 +451,15 @@ function checkCollisions() {
 
 function update(dt) {
     if (gameState !== 'playing') return;
+    
+    let targetLevel = Math.floor(score / 150) + 1;
+    if (targetLevel > currentLevel) {
+        currentLevel = targetLevel;
+        levelNotificationTimer = 3.0; // Show notification for 3 seconds
+    }
+    if (levelNotificationTimer > 0) {
+        levelNotificationTimer -= dt / 1000;
+    }
     
     spawnTimers.ship -= dt;
     spawnTimers.missile -= dt;
@@ -583,6 +596,16 @@ function draw() {
         ctx.fillStyle = '#fff';
         ctx.fillText(currentHighScoreJoke, 0, 50);
         
+        ctx.restore();
+    }
+    
+    // Draw low key level notification
+    if (levelNotificationTimer > 0) {
+        ctx.save();
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, levelNotificationTimer)})`;
+        ctx.font = "16px 'Press Start 2P', sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText(`LEVEL ${currentLevel}`, canvas.width / 2, layout.waterTop / 2 + 10);
         ctx.restore();
     }
 }
